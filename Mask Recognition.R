@@ -21,14 +21,22 @@ test_data_gen <- image_data_generator(
   rescale = 1/255
 )
 
+# image properties
+img_width <- 20
+img_height <- 20
+target_size <- c(img_width, img_height)
+channels <- 3
+
 trainingImages <- flow_images_from_directory(training_path,
                                              train_data_gen,
+                                             target_size = target_size,
                                              class_mode = 'categorical',
                                              classes = image_options,
                                              seed = 12)
 
 testImages <- flow_images_from_directory(test_path, 
                                          test_data_gen,
+                                         target_size = target_size,
                                          class_mode = 'categorical',
                                          classes = image_options,
                                          seed = 12)
@@ -38,11 +46,7 @@ table(factor(trainingImages$classes))
 table(factor(testImages$classes))
 
 
-# image properties
-img_width <- 20
-img_height <- 20
-target_size <- c(img_width, img_height)
-channels <- 3
+
 
 #########################################################################
 ## Difine the model
@@ -51,28 +55,41 @@ channels <- 3
 train_samples <- trainingImages$n
 test_samples <- testImages$n
 batch_size <- 32
-epochs <- 10
+epochs <- 40
 
 model <- keras_model_sequential() %>%
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid', input_shape = c(img_width, img_height, channels)) %>%
   layer_activation('relu') %>%
-  
-  # Second hidden layer
-  layer_conv_2d(filter = 16, kernel_size = c(3,3), padding = 'valid') %>%
-  layer_activation_leaky_relu(0.5) %>%
   layer_batch_normalization() %>%
   
+  # Second hidden layer
+  layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
+  layer_activation('relu') %>%
+  
+  # Third hidden layer
+  layer_conv_2d(filter = 16, kernel_size = c(3,3), padding = 'valid') %>%
+  layer_activation('relu') %>%
+  
+  # Fourth hidden layer
+  layer_conv_2d(filter = 16, kernel_size = c(3,3), padding = 'valid') %>%
+  layer_activation('relu') %>%
+  
+  # Fifth hidden layer
+  layer_conv_2d(filter = 16, kernel_size = c(3,3), padding = 'valid') %>%
+  layer_activation('relu') %>%
+  
   # Use max pooling
-  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+  layer_max_pooling_2d(pool_size = c(3,3)) %>%
   layer_dropout(0.25) %>%
   
   # Flatten max filtered output into feature vector 
   # and feed into dense layer
-  #layer_flatten() %>%
-  layer_dense(100) %>%
+  layer_flatten() %>%
+  layer_dense(30) %>%
   layer_activation('relu') %>%
-  layer_dropout(0.5) %>%
-  
+  layer_dropout(0.50) %>%
+
+  layer_activation('relu') %>%
   # Outputs from dense layer are projected onto output layer
   layer_dense(output_n) %>% 
   layer_activation('softmax')
@@ -81,9 +98,9 @@ summary(model)
 
 # compile
 model %>% compile(
-  loss = 'categorical_crossentropy',
-  optimizer = optimizer_rmsprop(),
-  metrics = 'accuracy'
+  loss = 'binary_crossentropy',
+  optimizer = optimizer_rmsprop(lr = 0.001, decay = 1e-2),
+  metrics = metric_binary_accuracy
 )
 
 
