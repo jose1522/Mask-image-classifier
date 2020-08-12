@@ -3,6 +3,7 @@ library(tensorflow)
 library(magick)
 library(dplyr)
 library(OpenImageR)
+library(caret)
 # Instalation guide: https://keras.rstudio.com/
 
 #########################################################################
@@ -151,8 +152,15 @@ evaluate_generator(model,testImages,steps=length(testImages))
 ## Test the model
 #########################################################################
 
+evaluate_generator(model,mask_eval,steps=length(mask_eval))
+
 predictions <- predict_generator(model, mask_eval, steps=length(mask_eval))
 predictions <- transform(predictions, predicted_class=apply(predictions, 1, which.max)-1)
 predictions['original_classes'] <- mask_eval$classes
 predictions <- predictions[,3:4]
 mask_eval$class_indices
+
+confusionMatrix(
+  factor(predictions$predicted_class, labels=c('with','without')),
+  factor(predictions$original_classes, labels=c('with','without'))
+  )
