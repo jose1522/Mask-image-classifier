@@ -1,5 +1,8 @@
 library(keras)
 library(tensorflow)
+library(magick)
+library(dplyr)
+library(OpenImageR)
 # Instalation guide: https://keras.rstudio.com/
 
 #########################################################################
@@ -7,6 +10,8 @@ library(tensorflow)
 #########################################################################
 
 path <- "./images"
+path2 <- "./images/evaluation"
+
 training_path <- file.path(path, "train")
 test_path <- file.path(path, "test")
 
@@ -20,6 +25,11 @@ train_data_gen = image_data_generator(
 test_data_gen <- image_data_generator(
   rescale = 1/255
 )
+
+mask_eval_gen = image_data_generator(
+  rescale = 1/255
+)
+
 
 # image properties
 img_width <- 20
@@ -41,6 +51,14 @@ testImages <- flow_images_from_directory(test_path,
                                          classes = image_options,
                                          seed = 12)
 
+mask_eval <- flow_images_from_directory( path2, 
+                                         mask_eval_gen,
+                                         target_size = target_size,
+                                         class_mode = 'categorical',
+                                         classes = image_options,
+                                         shuffle = FALSE,
+                                         seed = 12)
+
 # check images loaded for training and test
 table(factor(trainingImages$classes))
 table(factor(testImages$classes))
@@ -55,7 +73,7 @@ table(factor(testImages$classes))
 train_samples <- trainingImages$n
 test_samples <- testImages$n
 batch_size <- 32
-epochs <- 40
+epochs <- 25
 
 model <- keras_model_sequential() %>%
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid', input_shape = c(img_width, img_height, channels)) %>%
@@ -125,3 +143,16 @@ hist <- model %>% fit_generator(
     callback_tensorboard(log_dir = file.path(path, "mask_logs"))
   )
 )
+
+plot(hist)
+evaluate_generator(model,testImages,steps=length(testImages))
+
+#########################################################################
+## Test the model
+#########################################################################
+
+predictions <- predict_generator(model, mask_eval, steps=length(mask_eval))
+predictions <- transform(predictions, predicted_class=apply(predictions, 1, which.max)-1)
+predictions['original_classes'] <- mask_eval$classes
+predictions <- predictions[,3:4]
+mask_eval$class_indices
