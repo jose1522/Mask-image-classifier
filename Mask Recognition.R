@@ -82,7 +82,7 @@ table(factor(testImages$classes))
 train_samples <- trainingImages$n
 test_samples <- testImages$n
 batch_size <- 32
-epochs <- 40
+epochs <- 50
 
 model <- keras_model_sequential() %>%
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid', input_shape = c(img_width, img_height, channels)) %>%
@@ -92,7 +92,7 @@ model <- keras_model_sequential() %>%
   # Second hidden layer
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
   layer_activation('relu') %>%
-  layer_dropout(0.20) %>%
+  layer_dropout(0.30) %>%
   
   # Third hidden layer
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
@@ -102,10 +102,13 @@ model <- keras_model_sequential() %>%
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
   layer_activation('relu') %>%
   
+  layer_dense(100) %>%
+  layer_activation('relu') %>%
+  
   # Third hidden layer
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
   layer_activation('relu') %>%
-  layer_dropout(0.20) %>%
+  layer_dropout(0.30) %>%
 
   # Third hidden layer
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
@@ -126,7 +129,7 @@ model <- keras_model_sequential() %>%
   # Flatten max filtered output into feature vector 
   # and feed into dense layer
   layer_flatten() %>%
-  layer_dense(50) %>%
+  layer_dense(100) %>%
   layer_activation('relu') %>%
   layer_dropout(0.20) %>%
 
