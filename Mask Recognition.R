@@ -2,7 +2,6 @@ library(keras)
 library(tensorflow)
 library(magick)
 library(dplyr)
-library(OpenImageR)
 library(caret)
 # Instalation guide: https://keras.rstudio.com/
 
@@ -82,7 +81,7 @@ table(factor(testImages$classes))
 train_samples <- trainingImages$n
 test_samples <- testImages$n
 batch_size <- 32
-epochs <- 50
+epochs <- 30
 
 model <- keras_model_sequential() %>%
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid', input_shape = c(img_width, img_height, channels)) %>%
@@ -116,6 +115,9 @@ model <- keras_model_sequential() %>%
   
   # Fourth hidden layer
   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = 'valid') %>%
+  layer_activation('relu') %>%
+  
+  layer_dense(100) %>%
   layer_activation('relu') %>%
   
   # Fifth hidden layer
